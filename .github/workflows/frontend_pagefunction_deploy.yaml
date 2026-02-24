@@ -31,14 +31,10 @@ jobs:
           pnpm install --no-frozen-lockfile
           pnpm build:pages
           cd ../pages/
-          printf '%s\n' '${{ secrets.PAGE_TOML }}' > wrangler.toml
           export project_name=${{ secrets.FRONTEND_NAME }}
           if [ -z "$project_name" ]; then
             echo "FRONTEND_NAME secret is empty"
             exit 1
-          fi
-          if ! grep -q '^name' wrangler.toml; then
-            echo "name = \"$project_name\"" >> wrangler.toml
           fi
           if ! grep -q '^pages_build_output_dir' wrangler.toml; then
             echo 'pages_build_output_dir = "../frontend/dist"' >> wrangler.toml
