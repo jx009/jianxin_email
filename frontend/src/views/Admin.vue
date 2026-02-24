@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useGlobalState } from '../store'
 import { api } from '../api'
@@ -32,11 +32,12 @@ import AiExtractSettings from './admin/AiExtractSettings.vue';
 
 const {
   adminAuth, showAdminAuth, adminTab, loading,
-  globalTabplacement, showAdminPage, userSettings,
+  globalTabplacement, showAdminPage, userSettings, adminMailTabAddress,
   openSettings
 } = useGlobalState()
 const message = useMessage()
 const router = useRouter()
+const route = useRoute()
 
 const SendMail = defineAsyncComponent(() => {
   loading.value = true;
@@ -169,6 +170,29 @@ const currentLoginMethod = computed(() => {
 })
 
 onMounted(async () => {
+  const mailboxParam = typeof route.params?.mailbox === "string"
+    ? decodeURIComponent(route.params.mailbox).trim()
+    : "";
+  if (mailboxParam) {
+    let targetAddress = mailboxParam;
+    if (!mailboxParam.includes("@")) {
+      try {
+        const settings = await api.fetch("/open_api/settings");
+        const domains = settings?.defaultDomains?.length > 0
+          ? settings.defaultDomains
+          : settings?.domains || [];
+        const domain = domains[0];
+        if (domain) {
+          targetAddress = `${mailboxParam}@${domain}`;
+        }
+      } catch (error) {
+        console.error("failed to load domain for admin address route", error);
+      }
+    }
+    adminTab.value = "mails";
+    // lock admin mails tab query by "to" address
+    adminMailTabAddress.value = targetAddress;
+  }
   // make sure user_id is fetched
   if (!userSettings.value.user_id) await api.getUserSettings(message);
 })

@@ -21,14 +21,9 @@ const router = createRouter({
             component: Index
         },
         {
-            path: '/admin/:mailbox',
-            alias: "/:lang/admin/:mailbox",
-            component: Index
-        },
-        {
             path: '/admin/address/:mailbox',
             alias: "/:lang/admin/address/:mailbox",
-            component: Index
+            component: () => import('../views/Admin.vue')
         },
         {
             path: '/user',

@@ -9,10 +9,10 @@ const API_PATHS = [
 
 export async function onRequest(context) {
     const reqPath = new URL(context.request.url).pathname;
-    const isDirectInboxRoute = /^\/admin\/address\/[^/]+$/.test(reqPath);
+    const directInboxMatch = reqPath.match(/^\/(?:[a-z]{2}\/)?admin\/address\/[^/]+\/?$/i);
     const accept = context.request.headers.get("accept") || "";
     const isHtmlNavigation = accept.includes("text/html");
-    if (isDirectInboxRoute && isHtmlNavigation) {
+    if (directInboxMatch && isHtmlNavigation) {
         return await context.next();
     }
     if (API_PATHS.map(path => reqPath.startsWith(path)).some(Boolean)) {
