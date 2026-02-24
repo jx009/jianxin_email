@@ -16,6 +16,11 @@ const router = createRouter({
             component: Index
         },
         {
+            path: '/:mailbox',
+            alias: "/:lang/:mailbox",
+            component: Index
+        },
+        {
             path: '/user',
             alias: "/:lang/user",
             component: User

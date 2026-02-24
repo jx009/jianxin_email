@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
+import { Jwt } from 'hono/utils/jwt'
 
 import utils from './utils';
 import { CONSTANTS } from './constants';
 import { isS3Enabled } from './mails_api/s3_attachment';
-import { isAnySendMailEnabled } from './common';
+import { isAnySendMailEnabled, newAddress } from './common';
 
 const api = new Hono<HonoCustomType>
 
@@ -44,6 +45,78 @@ api.get('/open_api/settings', async (c) => {
         "showGithub": !utils.getBooleanValue(c.env.DISABLE_SHOW_GITHUB),
         "disableAdminPasswordCheck": utils.getBooleanValue(c.env.DISABLE_ADMIN_PASSWORD_CHECK),
         "enableAddressPassword": utils.getBooleanValue(c.env.ENABLE_ADDRESS_PASSWORD)
+    });
+})
+
+api.get('/open_api/address_jwt/:mailbox', async (c) => {
+    const mailboxParam = decodeURIComponent(c.req.param("mailbox") || "")
+        .trim()
+        .toLowerCase();
+    if (!mailboxParam) {
+        return c.text("mailbox is required", 400);
+    }
+
+    const allDomains = utils.getDomains(c);
+    if (!allDomains || allDomains.length < 1) {
+        return c.text("No domains configured", 400);
+    }
+
+    let localName = mailboxParam;
+    let domain = "";
+    if (mailboxParam.includes("@")) {
+        const split = mailboxParam.split("@");
+        if (split.length !== 2 || !split[0] || !split[1]) {
+            return c.text("Invalid mailbox format", 400);
+        }
+        [localName, domain] = split;
+    } else {
+        const defaultDomains = utils.getDefaultDomains(c);
+        domain = defaultDomains?.[0] || allDomains[0];
+    }
+
+    if (!allDomains.includes(domain)) {
+        return c.text("Invalid domain", 400);
+    }
+    const address = `${localName}@${domain}`;
+    if (!localName) {
+        return c.text("Invalid mailbox format", 400);
+    }
+
+    let addressId = await c.env.DB.prepare(
+        `SELECT id FROM address where name = ?`
+    ).bind(address).first<number>("id");
+
+    if (!addressId) {
+        if (!utils.getBooleanValue(c.env.ENABLE_USER_CREATE_EMAIL)) {
+            return c.text("Mailbox does not exist", 404);
+        }
+        try {
+            const created = await newAddress(c, {
+                name: localName,
+                domain,
+                enablePrefix: false,
+                checkLengthByConfig: true,
+                checkAllowDomains: true,
+            });
+            return c.json(created);
+        } catch (error) {
+            console.error("Failed to create mailbox from route", error);
+            addressId = await c.env.DB.prepare(
+                `SELECT id FROM address where name = ?`
+            ).bind(address).first<number>("id");
+            if (!addressId) {
+                return c.text((error as Error).message || "Failed to create mailbox", 400);
+            }
+        }
+    }
+
+    const jwt = await Jwt.sign({
+        address,
+        address_id: addressId,
+    }, c.env.JWT_SECRET, "HS256");
+    return c.json({
+        address,
+        jwt,
     });
 })
 
