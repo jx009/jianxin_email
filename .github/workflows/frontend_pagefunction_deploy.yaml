@@ -34,7 +34,7 @@ jobs:
           echo 'pages_build_output_dir = "../frontend/dist"' >> wrangler.toml
           pnpm install --no-frozen-lockfile
           export project_name=${{ secrets.FRONTEND_NAME }}
-          pnpm exec wrangler pages deploy --project-name="$project_name" --branch production --config wrangler.toml
+          pnpm exec wrangler pages deploy --project-name="$project_name" --branch production
           echo "Deploying prodcution for ${{ github.ref_name }}"
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
