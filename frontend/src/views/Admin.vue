@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useGlobalState } from '../store'
 import { api } from '../api'
@@ -37,6 +37,7 @@ const {
 } = useGlobalState()
 const message = useMessage()
 const router = useRouter()
+const route = useRoute()
 
 const SendMail = defineAsyncComponent(() => {
   loading.value = true;
@@ -167,6 +168,19 @@ const currentLoginMethod = computed(() => {
   }
   return '';
 })
+
+const hasRouteBoxQuery = () => {
+  const boxQuery = Array.isArray(route.query.box)
+    ? route.query.box[0]
+    : route.query.box;
+  return typeof boxQuery === 'string' && boxQuery.trim().length > 0;
+}
+
+watch(() => route.query.box, () => {
+  if (hasRouteBoxQuery()) {
+    adminTab.value = "mails";
+  }
+}, { immediate: true });
 
 onMounted(async () => {
   // make sure user_id is fetched
