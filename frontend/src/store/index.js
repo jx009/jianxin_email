@@ -68,6 +68,7 @@ export const useGlobalState = createGlobalState(
         const addressPassword = useSessionStorage('addressPassword', '');
         const adminTab = useSessionStorage('adminTab', "account");
         const adminMailTabAddress = ref("");
+        const adminMailQueryNonce = ref(0);
         const adminSendBoxTabAddress = ref("");
         const mailboxSplitSize = useStorage('mailboxSplitSize', 0.25);
         const useIframeShowMail = useStorage('useIframeShowMail', false);
@@ -129,6 +130,7 @@ export const useGlobalState = createGlobalState(
             showAdminAuth,
             adminTab,
             adminMailTabAddress,
+            adminMailQueryNonce,
             adminSendBoxTabAddress,
             mailboxSplitSize,
             useIframeShowMail,

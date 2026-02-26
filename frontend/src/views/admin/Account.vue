@@ -10,7 +10,7 @@ import { MenuFilled } from '@vicons/material'
 
 const {
     loading, adminTab, openSettings,
-    adminMailTabAddress, adminSendBoxTabAddress
+    adminMailTabAddress, adminMailQueryNonce, adminSendBoxTabAddress
 } = useGlobalState()
 const message = useMessage()
 
@@ -336,6 +336,7 @@ const columns = [
                         if (row.mail_count > 0) {
                             adminMailTabAddress.value = row.name;
                             adminTab.value = "mails";
+                            adminMailQueryNonce.value = Date.now();
                         }
                     }
                 },

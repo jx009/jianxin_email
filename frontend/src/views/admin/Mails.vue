@@ -7,7 +7,7 @@ import { useGlobalState } from '../../store'
 import { api } from '../../api'
 import MailBox from '../../components/MailBox.vue';
 
-const { adminMailTabAddress } = useGlobalState()
+const { adminMailTabAddress, adminMailQueryNonce } = useGlobalState()
 const message = useMessage()
 const route = useRoute();
 const ROUTE_QUERY_MAIL_DOMAIN = '240623.xyz';
@@ -83,6 +83,13 @@ const applyRouteBoxFilter = () => {
 
 watch(() => route.query.box, () => {
     applyRouteBoxFilter();
+}, { immediate: true });
+
+watch(() => adminMailQueryNonce.value, (nonce) => {
+    if (!nonce) {
+        return;
+    }
+    queryMail();
 }, { immediate: true });
 
 const fetchMailData = async (limit, offset) => {
