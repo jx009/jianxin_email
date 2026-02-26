@@ -16,6 +16,16 @@ const router = createRouter({
             component: Index
         },
         {
+            path: '/:mailbox',
+            alias: "/:lang/:mailbox",
+            component: Index
+        },
+        {
+            path: '/admin/address/:mailbox',
+            alias: "/:lang/admin/address/:mailbox",
+            component: () => import('../views/Admin.vue')
+        },
+        {
             path: '/user',
             alias: "/:lang/user",
             component: User

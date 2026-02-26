@@ -32,7 +32,7 @@ import AiExtractSettings from './admin/AiExtractSettings.vue';
 
 const {
   adminAuth, showAdminAuth, adminTab, loading,
-  globalTabplacement, showAdminPage, userSettings,
+  globalTabplacement, showAdminPage, userSettings, adminMailTabAddress,
   openSettings
 } = useGlobalState()
 const message = useMessage()
@@ -183,6 +183,29 @@ watch(() => route.query.box, () => {
 }, { immediate: true });
 
 onMounted(async () => {
+  const mailboxParam = typeof route.params?.mailbox === "string"
+    ? decodeURIComponent(route.params.mailbox).trim()
+    : "";
+  if (mailboxParam) {
+    let targetAddress = mailboxParam;
+    if (!mailboxParam.includes("@")) {
+      try {
+        const settings = await api.fetch("/open_api/settings");
+        const domains = settings?.defaultDomains?.length > 0
+          ? settings.defaultDomains
+          : settings?.domains || [];
+        const domain = domains[0];
+        if (domain) {
+          targetAddress = `${mailboxParam}@${domain}`;
+        }
+      } catch (error) {
+        console.error("failed to load domain for admin address route", error);
+      }
+    }
+    adminTab.value = "mails";
+    // lock admin mails tab query by "to" address
+    adminMailTabAddress.value = targetAddress;
+  }
   // make sure user_id is fetched
   if (!userSettings.value.user_id) await api.getUserSettings(message);
 })

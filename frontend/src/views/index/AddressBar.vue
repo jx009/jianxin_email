@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { User, ExchangeAlt } from '@vicons/fa'
 
 import { useGlobalState } from '../../store'
@@ -14,6 +14,7 @@ import { getRouterPathWithLang } from '../../utils'
 import AddressSelect from '../../components/AddressSelect.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const {
     jwt, settings, showAddressCredential, userJwt,
@@ -31,6 +32,7 @@ const { locale, t } = useI18n({
             addressPassword: 'Address Password',
             userLogin: 'User Login',
             addressManage: 'Manage',
+            directInboxError: 'Failed to open mailbox from URL',
         },
         zh: {
             ok: '确定',
@@ -41,6 +43,7 @@ const { locale, t } = useI18n({
             addressPassword: '地址密码',
             userLogin: '用户登录',
             addressManage: '地址管理',
+            directInboxError: '通过地址栏打开邮箱失败',
         }
     }
 });
@@ -55,7 +58,34 @@ const onUserLogin = async () => {
     await router.push(getRouterPathWithLang("/user", locale.value))
 }
 
+const getMailboxParamFromRoute = () => {
+    const mailboxParam = route.params?.mailbox;
+    if (Array.isArray(mailboxParam)) {
+        return mailboxParam[0] || "";
+    }
+    if (typeof mailboxParam === "string") {
+        return mailboxParam;
+    }
+    return "";
+}
+
+const syncJwtByMailboxParam = async () => {
+    const mailbox = getMailboxParamFromRoute().trim();
+    if (!mailbox) {
+        return;
+    }
+    try {
+        const res = await api.fetch(`/open_api/address_jwt/${encodeURIComponent(mailbox)}`);
+        if (res?.jwt) {
+            jwt.value = res.jwt;
+        }
+    } catch (error) {
+        message.error(`${t('directInboxError')}: ${error.message || "error"}`);
+    }
+}
+
 onMounted(async () => {
+    await syncJwtByMailboxParam();
     await api.getSettings();
 });
 </script>
